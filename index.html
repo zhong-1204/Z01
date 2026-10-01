@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark scroll-smooth select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>捷運指揮控制中心 ✨ TAIPEI METRO COMMAND & CONTROL CENTER</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@300;400;600;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        metroDark: '#07090E',
+                        glassPanel: 'rgba(18, 24, 38, 0.65)',
+                        glassBorder: 'rgba(255, 255, 255, 0.12)',
+                        /* Taipei Metro Official Line Colors */
+                        lineBlue: '#0070BD',    /* 板南線 Bannan Line */
+                        lineRed: '#E3002C',     /* 淡水信義線 Tamsui-Xinyi Line */
+                        lineGreen: '#008659',   /* 松山新店線 Songshan-Xindian Line */
+                        lineOrange: '#F8B61C',  /* 中和新蘆線 Zhonghe-Xinlu Line */
+                        lineBrown: '#C48C31',   /* 文湖線 Wenhu Line */
+                        lineYellow: '#FFDB00',  /* 環狀線 Circular Line */
+                        /* Pastel UI Accents */
+                        neonCyan: '#00F0FF',
+                        neonPurple: '#B87CFF',
+                        neonPink: '#FF70A6',
+                        neonGreen: '#39FF14',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #07090E;
+            color: #F1F5F9;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Styling */
+        .glass-card {
+            background: rgba(16, 22, 34, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-card-hover:hover {
+            background: rgba(26, 36, 56, 0.75);
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 16px 50px 0 rgba(0, 240, 255, 0.2);
+            transform: translateY(-3px) scale(1.005);
+        }
+
+        /* Scanline Overlay for Cyber Command Center Effect */
+        .scanline-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.28) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        /* Emergency Alarm Flash Screen State */
+        .alarm-mode {
+            animation: alarmFlash 1s infinite alternate;
+        }
+        @keyframes alarmFlash {
+            0% { box-shadow: inset 0 0 100px rgba(227, 0, 44, 0.2); }
+            100% { box-shadow: inset 0 0 150px rgba(227, 0, 44, 0.55); }
+        }
+
+        /* Glowing Orbs for Parallax Background */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.35;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #07090E;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 240, 255, 0.6);
+        }
+
+        /* Bouncing Data Animation */
+        @keyframes dataBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        .data-bounce {
+            animation: dataBounce 2.5s ease-in-out infinite;
+        }
+
+        /* Character Speech Bubble Animation */
+        @keyframes floatBubble {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-5px) scale(1.02); }
+        }
+        .animate-bubble {
+            animation: floatBubble 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative overflow-x-hidden selection:bg-neonCyan selection:text-metroDark">
+
+    <!-- Scanline Screen Effect -->
+    <div class="fixed inset-0 scanline-overlay z-50 pointer-events-none opacity-40"></div>
+
+    <!-- Parallax Glowing Orbs Background Layer -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div id="orb-1" class="glow-orb w-[650px] h-[650px] bg-lineBlue -top-40 -left-40"></div>
+        <div id="orb-2" class="glow-orb w-[750px] h-[750px] bg-lineRed top-1/3 -right-40"></div>
+        <div id="orb-3" class="glow-orb w-[600px] h-[600px] bg-lineGreen bottom-0 left-1/3"></div>
+    </div>
+
+    <!-- TOP HEADER / CONTROL NAVIGATION -->
+    <header class="sticky top-0 z-40 px-4 md:px-8 py-3.5 backdrop-blur-xl bg-metroDark/80 border-b border-white/10">
+        <div class="max-w-[1920px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Brand Title & Mascot Info -->
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl glass-card flex items-center justify-center p-1.5 cursor-pointer hover:scale-105 transition-transform relative group border border-neonCyan/40">
+                    <!-- Station Master Cat Vector SVG -->
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="42" fill="#121826"/>
+                        <!-- Ears -->
+                        <polygon points="18,30 32,8 42,32" fill="#FF70A6"/>
+                        <polygon points="82,30 68,8 58,32" fill="#FF70A6"/>
+                        <!-- Hat -->
+                        <path d="M 22 34 Q 50 20 78 34 L 72 26 Q 50 14 28 26 Z" fill="#0070BD"/>
+                        <rect x="42" y="22" width="16" height="6" rx="2" fill="#FFDB00"/>
+                        <!-- Face Eyes -->
+                        <ellipse cx="38" cy="52" rx="5" ry="7" fill="#00F0FF"/>
+                        <ellipse cx="62" cy="52" rx="5" ry="7" fill="#00F0FF"/>
+                        <circle cx="40" cy="50" r="2" fill="#FFF"/>
+                        <circle cx="64" cy="50" r="2" fill="#FFF"/>
+                        <polygon points="50,60 46,65 54,65" fill="#FF70A6"/>
+                        <path d="M 42 68 Q 50 74 58 68" stroke="#00F0FF" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <!-- Whiskers -->
+                        <line x1="18" y1="52" x2="30" y2="54" stroke="#A0AEC0" stroke-width="2"/>
+                        <line x1="18" y1="60" x2="30" y2="58" stroke="#A0AEC0" stroke-width="2"/>
+                        <line x1="82" y1="52" x2="70" y2="54" stroke="#A0AEC0" stroke-width="2"/>
+                        <line x1="82" y1="60" x2="70" y2="58" stroke="#A0AEC0" stroke-width="2"/>
+                    </svg>
+                    <!-- Popover Tooltip -->
+                    <div class="absolute top-14 left-0 glass-card px-3 py-1.5 rounded-xl text-xs font-bold text-neonCyan whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-2xl">
+                        喵！貓貓站長全程維護行車安全！
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="text-xl md:text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                            捷運指揮控制中心
+                            <span class="text-xs font-mono px-2 py-0.5 rounded-md bg-lineBlue/30 text-neonCyan border border-lineBlue/50 font-semibold">TRTC OCC</span>
+                        </h1>
+                    </div>
+                    <p class="text-[11px] text-gray-400 font-mono tracking-wider">TAIPEI METRO OPERATIONAL COMMAND & CONTROL SYSTEM</p>
+                </div>
+            </div>
+
+            <!-- Ticker Announcement Banner -->
+            <div class="hidden lg:flex items-center gap-2 glass-card px-4 py-1.5 rounded-2xl border-lineBlue/30 text-xs font-mono text-gray-300 max-w-md overflow-hidden">
+                <span class="w-2 h-2 rounded-full bg-neonGreen animate-ping"></span>
+                <span class="text-neonCyan font-bold shrink-0">即時廣播：</span>
+                <marquee class="whitespace-nowrap font-sans text-gray-300">
+                    全線班次正常行駛 • 板南線台北車站尖峰人流防護啟動 • 淡水信義線增開 2 班加班車 • 全系統運轉順暢
+                </marquee>
+            </div>
+
+            <!-- System Indicators, Clock & Switcher -->
+            <div class="flex items-center gap-3">
+                <!-- System Status Indicator Badge -->
+                <div id="status-badge" class="glass-card px-3 py-1.5 rounded-2xl flex items-center gap-2 border-neonGreen/40">
+                    <span id="status-dot" class="w-2.5 h-2.5 rounded-full bg-neonGreen animate-pulse"></span>
+                    <span id="status-text" class="text-xs font-bold text-neonGreen font-mono uppercase">NORMAL Mode</span>
+                </div>
+
+                <!-- Live Ticking Millisecond Clock -->
+                <div class="glass-card px-3.5 py-1.5 rounded-2xl flex items-center gap-2.5">
+                    <div class="text-right">
+                        <div id="clock-time" class="text-base font-mono font-bold text-neonCyan tracking-wider">00:00:00.000</div>
+                        <div id="clock-date" class="text-[9px] font-mono text-gray-400">2026-09-24 THU</div>
+                    </div>
+                </div>
+
+                <!-- Alarm / Audio Simulation Trigger -->
+                <button onclick="toggleAlarmMode()" title="切換緊急廣播/警報模式" class="glass-card p-2 rounded-2xl hover:bg-lineRed/30 transition-colors border-lineRed/30 text-lineRed text-sm">
+                    🚨
+                </button>
+
+                <!-- View Switcher Tabs -->
+                <div class="glass-card p-1 rounded-2xl flex items-center gap-1 border-white/10">
+                    <button id="tab-v1" onclick="switchView('v1')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-neonCyan text-metroDark shadow-lg">
+                        V1 主控控制台
+                    </button>
+                    <button id="tab-v2" onclick="switchView('v2')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white">
+                        V2 八區營運智慧牆
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT AREA -->
+    <main class="max-w-[1920px] mx-auto p-4 md:p-6 relative z-10 space-y-6">
+
+        <!-- CUTE STATION MASCOT MASCOTS & SPEECH BUBBLE ALERTS DOCK -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Mascot 1: Station Master Cat -->
+            <div onclick="triggerMascotSpeech('cat')" class="glass-card glass-card-hover p-3.5 rounded-2xl flex items-center gap-3.5 cursor-pointer relative overflow-hidden group border-lineBlue/30">
+                <div class="w-12 h-12 rounded-2xl bg-lineBlue/20 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+                    🐱
+                </div>
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-white">貓貓站長</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded bg-lineBlue/30 text-neonCyan font-mono">總調度員</span>
+                    </div>
+                    <p id="speech-cat" class="text-xs text-gray-300 font-medium animate-bubble">
+                        「全線列車運轉率 100%，板南線車次順暢通行中！」
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mascot 2: Rabbit Signal Dispatcher -->
+            <div onclick="triggerMascotSpeech('rabbit')" class="glass-card glass-card-hover p-3.5 rounded-2xl flex items-center gap-3.5 cursor-pointer relative overflow-hidden group border-lineGreen/30">
+                <div class="w-12 h-12 rounded-2xl bg-lineGreen/20 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+                    🐰
+                </div>
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-white">兔兔調度員</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded bg-lineGreen/30 text-neonGreen font-mono">號誌控制</span>
+                    </div>
+                    <p id="speech-rabbit" class="text-xs text-gray-300 font-medium animate-bubble">
+                        「淡水信義線與松山新店線號誌連線 CBTC 極度穩定！」
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mascot 3: Dog Security Chief -->
+            <div onclick="triggerMascotSpeech('dog')" class="glass-card glass-card-hover p-3.5 rounded-2xl flex items-center gap-3.5 cursor-pointer relative overflow-hidden group border-lineOrange/30">
+                <div class="w-12 h-12 rounded-2xl bg-lineOrange/20 flex items-center justify-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
+                    🐶
+                </div>
+                <div class="space-y-0.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-white">柴柴安檢員</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded bg-lineOrange/30 text-lineOrange font-mono">月台維安</span>
+                    </div>
+                    <p id="speech-dog" class="text-xs text-gray-300 font-medium animate-bubble">
+                        「台北車站與忠孝復興月台人潮秩序維持極優！」
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==================== VIEW 1: MAIN CONSOLE SCREEN ==================== -->
+        <div id="view-v1" class="space-y-6">
+            
+            <!-- 6 Bouncing Metric Telemetry Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-lineBlue/20">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">車廂平均 CO₂</div>
+                    <div id="m-co2" class="text-2xl font-mono font-black text-neonCyan">538 ppm</div>
+                    <div class="text-[10px] text-neonGreen flex items-center gap-1 mt-1 font-mono">
+                        <span>● 優良</span>
+                        <span class="text-gray-500">空調運轉中</span>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-lineRed/20" style="animation-delay: 0.2s;">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">月台平均噪音</div>
+                    <div id="m-noise" class="text-2xl font-mono font-black text-neonPurple">64.2 dB</div>
+                    <div class="text-[10px] text-neonCyan flex items-center gap-1 mt-1 font-mono">
+                        <span>符合減噪標準</span>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-lineGreen/20" style="animation-delay: 0.4s;">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">每小時進出站流量</div>
+                    <div id="m-flow" class="text-2xl font-mono font-black text-neonGreen">142.8 k/h</div>
+                    <div class="text-[10px] text-neonGreen flex items-center gap-1 mt-1 font-mono">
+                        <span>↑ 8.4% 尖峰上升</span>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-lineOrange/20" style="animation-delay: 0.6s;">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">牽引電網總功率</div>
+                    <div id="m-power" class="text-2xl font-mono font-black text-lineOrange">84,250 kW</div>
+                    <div class="text-[10px] text-lineOrange flex items-center gap-1 mt-1 font-mono">
+                        <span>750V DC 直流供電</span>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-neonPink/20" style="animation-delay: 0.8s;">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">車站 Wi-Fi 連線數</div>
+                    <div id="m-wifi" class="text-2xl font-mono font-black text-neonPink">38,920</div>
+                    <div class="text-[10px] text-neonPink flex items-center gap-1 mt-1 font-mono">
+                        <span>負載 42% 正常</span>
+                    </div>
+                </div>
+
+                <div class="glass-card glass-card-hover p-4 rounded-2xl data-bounce border-lineBlue/20" style="animation-delay: 1.0s;">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">全線列車准點率</div>
+                    <div id="m-punctual" class="text-2xl font-mono font-black text-neonCyan">99.85 %</div>
+                    <div class="text-[10px] text-neonGreen flex items-center gap-1 mt-1 font-mono">
+                        <span>目標達成 A+</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Middle Grid: AI Stream Log (Left) + Interactive Metro Canvas Map (Right) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- Left Column: Live AI Streaming System Log Terminal -->
+                <div class="lg:col-span-4 glass-card rounded-3xl p-5 flex flex-col justify-between border-white/10">
+                    <div>
+                        <div class="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-neonCyan animate-ping"></span>
+                                <h2 class="text-base font-black text-white tracking-wide">AI 行控決策即時數據流</h2>
+                            </div>
+                            <span class="text-[10px] font-mono text-gray-400">REALTIME LOGS</span>
+                        </div>
+
+                        <p class="text-xs text-gray-400 mb-3 leading-relaxed">
+                            即時分析全台北捷運系統 117 個車站、數千個號誌與車載 ATO 自動駕駛狀態。
+                        </p>
+
+                        <!-- Terminal Output Window -->
+                        <div id="terminal-box" class="w-full h-[360px] bg-metroDark/90 rounded-2xl p-3.5 border border-white/10 font-mono text-[11px] text-neonGreen overflow-y-auto space-y-1.5 shadow-inner">
+                            <div>[SYSTEM] 初始化台北捷運全線行控矩陣完成...</div>
+                            <div>[CBTC] 板南線 BL12~BL15 段號誌鏈路已雙向加密</div>
+                        </div>
+                    </div>
+
+                    <!-- Dispatch Test Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2 mt-4">
+                        <button onclick="injectSimulatedAlert()" class="py-2.5 rounded-xl bg-lineRed/20 hover:bg-lineRed/40 border border-lineRed/40 text-lineRed font-bold text-xs transition-colors">
+                            ⚡ 模擬高峰突發人流
+                        </button>
+                        <button onclick="clearTerminalLogs()" class="py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 text-gray-300 font-bold text-xs transition-colors">
+                            🧹 清除行控日誌
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Taipei Metro Cross-Line Canvas Map -->
+                <div class="lg:col-span-8 glass-card rounded-3xl p-5 relative overflow-hidden flex flex-col justify-between border-white/10">
+                    
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full bg-lineRed animate-ping"></span>
+                            <h2 class="text-lg font-black text-white tracking-wide">台北捷運全線網絡即時列車動態軌道圖</h2>
+                        </div>
+                        
+                        <!-- Line Toggle Filter Pills -->
+                        <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+                            <button onclick="toggleLine('BL')" id="btn-BL" class="px-2.5 py-1 rounded-lg border border-lineBlue bg-lineBlue/30 text-white">板南線</button>
+                            <button onclick="toggleLine('R')" id="btn-R" class="px-2.5 py-1 rounded-lg border border-lineRed bg-lineRed/30 text-white">淡水信義線</button>
+                            <button onclick="toggleLine('G')" id="btn-G" class="px-2.5 py-1 rounded-lg border border-lineGreen bg-lineGreen/30 text-white">松山新店線</button>
+                            <button onclick="toggleLine('BR')" id="btn-BR" class="px-2.5 py-1 rounded-lg border border-lineBrown bg-lineBrown/30 text-white">文湖線</button>
+                        </div>
+                    </div>
+
+                    <!-- Canvas Wrapper Container -->
+                    <div class="w-full h-[400px] relative bg-metroDark/80 rounded-2xl border border-white/10 overflow-hidden cursor-crosshair">
+                        <canvas id="metro-canvas" class="w-full h-full block"></canvas>
+                        
+                        <!-- Floating Canvas Mascot Overlay -->
+                        <div class="absolute bottom-3 left-3 glass-card px-3 py-2 rounded-2xl flex items-center gap-2.5 pointer-events-none border-white/10">
+                            <span class="text-xl">🐱</span>
+                            <div>
+                                <div class="text-[11px] font-bold text-neonCyan">全線模擬車次：184 列車</div>
+                                <div class="text-[9px] text-gray-400">點擊軌道畫布可實施即時調度測試</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Legend Footnote -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-white/10 text-xs font-mono text-gray-400">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lineBlue"></span> BL 板南線</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lineRed"></span> R 淡水信義線</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lineGreen"></span> G 松山新店線</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-lineBrown"></span> BR 文湖線</span>
+                        </div>
+                        <span class="text-neonCyan">● 動態高亮代表即時列車位置</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Bottom Grid: Dual Dynamic Visual Canvas Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Chart 1: Air Quality & Ventilation Stream -->
+                <div class="glass-card rounded-3xl p-5 border-white/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span class="text-neonCyan">📊</span> 車站月台空氣品質與通風量監測
+                        </h3>
+                        <span class="text-[10px] font-mono text-neonGreen">LIVE TELEMETRY</span>
+                    </div>
+                    <div class="w-full h-32 relative bg-metroDark/60 rounded-xl overflow-hidden">
+                        <canvas id="chart-air" class="w-full h-full block"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: CBTC Signal Load Stream -->
+                <div class="glass-card rounded-3xl p-5 border-white/10">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <span class="text-neonPurple">⚡</span> CBTC 自動駕駛號誌頻寬與延遲
+                        </h3>
+                        <span class="text-[10px] font-mono text-neonCyan">1.2ms LATENCY</span>
+                    </div>
+                    <div class="w-full h-32 relative bg-metroDark/60 rounded-xl overflow-hidden">
+                        <canvas id="chart-signal" class="w-full h-full block"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==================== VIEW 2: 8-DOMAIN OPERATIONS WALL ==================== -->
+        <div id="view-v2" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <!-- Domain 1: Bannan Line ATO -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineBlue/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineBlue uppercase tracking-wider">DOMAIN 01 • BL</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">板南線自動列車駕駛</h3>
+                    <p class="text-xs text-gray-400 mb-4">南港展覽館 — 頂埔 (23 站全線運轉)</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">目前運轉班次</span>
+                            <span class="text-neonCyan">42 列車</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">最小班距</span>
+                            <span class="text-neonGreen">135 秒</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：貓貓站長</span>
+                    <span class="text-xl">🐱</span>
+                </div>
+            </div>
+
+            <!-- Domain 2: Tamsui-Xinyi Line -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineRed/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineRed uppercase tracking-wider">DOMAIN 02 • R</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">淡水信義線高架/地下段</h3>
+                    <p class="text-xs text-gray-400 mb-4">淡水 — 象山 (28 站強風監測)</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">高架段風速</span>
+                            <span class="text-neonCyan">4.2 m/s (安全)</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">台北車站轉乘量</span>
+                            <span class="text-lineOrange">24,500 人/時</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：柴柴安檢員</span>
+                    <span class="text-xl">🐶</span>
+                </div>
+            </div>
+
+            <!-- Domain 3: Songshan-Xindian Line -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineGreen/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineGreen uppercase tracking-wider">DOMAIN 03 • G</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">松山新店線綠電與煞車</h3>
+                    <p class="text-xs text-gray-400 mb-4">松山 — 新店 (再生煞車回收電能)</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">今日電力回收</span>
+                            <span class="text-neonGreen">18,940 kWh</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">西門站月台門</span>
+                            <span class="text-neonCyan">100% 正常</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：兔兔調度員</span>
+                    <span class="text-xl">🐰</span>
+                </div>
+            </div>
+
+            <!-- Domain 4: Wenhu Line Unmanned System -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineBrown/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineBrown uppercase tracking-wider">DOMAIN 04 • BR</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">文湖線無人駕駛系統</h3>
+                    <p class="text-xs text-gray-400 mb-4">南港展覽館 — 動物園 (胶輪系統)</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">自動避障障礙感測</span>
+                            <span class="text-neonGreen">OK</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">車廂溫度</span>
+                            <span class="text-neonCyan">22.8 °C</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：貓貓站長</span>
+                    <span class="text-xl">🐱</span>
+                </div>
+            </div>
+
+            <!-- Domain 5: Zhonghe-Xinlu Line -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineOrange/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineOrange uppercase tracking-wider">DOMAIN 05 • O</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">中和新蘆線雙分岔調度</h3>
+                    <p class="text-xs text-gray-400 mb-4">南勢角 — 迴龍/蘆洲</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">大橋頭分分岔轉轍器</span>
+                            <span class="text-neonGreen">定位正常</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">過軌耗損比率</span>
+                            <span class="text-neonCyan">0.01%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：柴柴安檢員</span>
+                    <span class="text-xl">🐶</span>
+                </div>
+            </div>
+
+            <!-- Domain 6: Circular Line -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineYellow/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineYellow uppercase tracking-wider">DOMAIN 06 • Y</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">環狀線全自動中運量</h3>
+                    <p class="text-xs text-gray-400 mb-4">新北產業園區 — 大坪林</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">高架鋼軌減震</span>
+                            <span class="text-neonGreen">最佳化</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">橋樑結構應變感測</span>
+                            <span class="text-neonCyan">正常</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：兔兔調度員</span>
+                    <span class="text-xl">🐰</span>
+                </div>
+            </div>
+
+            <!-- Domain 7: Earthquake & Disaster Early Warning -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-lineRed/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-lineRed uppercase tracking-wider">DOMAIN 07 • SAFETY</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">地震 P 波與急煞系統</h3>
+                    <p class="text-xs text-gray-400 mb-4">連線中央氣象署 Earthquake Warning</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">感測器狀態</span>
+                            <span class="text-neonGreen">STANDBY (連線)</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">緊急煞車反應時間</span>
+                            <span class="text-neonCyan font-bold">&lt; 0.1s</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：貓貓站長</span>
+                    <span class="text-xl">🐱</span>
+                </div>
+            </div>
+
+            <!-- Domain 8: Smart Gate & Payment Flow -->
+            <div class="glass-card glass-card-hover p-5 rounded-3xl flex flex-col justify-between border-neonCyan/30">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-bold text-neonCyan uppercase tracking-wider">DOMAIN 08 • GATE API</span>
+                        <span class="w-2 h-2 rounded-full bg-neonGreen"></span>
+                    </div>
+                    <h3 class="text-base font-black text-white mb-1">多元票證與閘門流量</h3>
+                    <p class="text-xs text-gray-400 mb-4">悠遊卡/一卡通/QR Code/信用卡</p>
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">閘門 API 延遲</span>
+                            <span class="text-neonGreen">0.8 ms</span>
+                        </div>
+                        <div class="flex justify-between border-b border-white/10 pb-1">
+                            <span class="text-gray-400">過卡成功率</span>
+                            <span class="text-neonCyan">99.99%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">負責人：柴柴安檢員</span>
+                    <span class="text-xl">🐶</span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JAVASCRIPT LOGIC & INTERACTIVE CONTROLLERS -->
+    <script>
+        // --- 1. Ticking Millisecond Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            const hrs = String(now.getHours()).padStart(2, '0');
+            const mins = String(now.getMinutes()).padStart(2, '0');
+            const secs = String(now.getSeconds()).padStart(2, '0');
+            const ms = String(now.getMilliseconds()).padStart(3, '0');
+
+            document.getElementById('clock-time').innerText = `${hrs}:${mins}:${secs}.${ms}`;
+
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+            document.getElementById('clock-date').innerText = `${year}-${month}-${day} ${days[now.getDay()]}`;
+
+            requestAnimationFrame(updateClock);
+        }
+        requestAnimationFrame(updateClock);
+
+        // --- 2. View Switching Logic ---
+        function switchView(view) {
+            const v1 = document.getElementById('view-v1');
+            const v2 = document.getElementById('view-v2');
+            const tab1 = document.getElementById('tab-v1');
+            const tab2 = document.getElementById('tab-v2');
+
+            if (view === 'v1') {
+                v1.classList.remove('hidden');
+                v2.classList.add('hidden');
+                tab1.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-neonCyan text-metroDark shadow-lg";
+                tab2.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white";
+            } else {
+                v1.classList.add('hidden');
+                v2.classList.remove('hidden');
+                tab2.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all bg-neonCyan text-metroDark shadow-lg";
+                tab1.className = "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white";
+            }
+        }
+
+        // --- 3. Parallax Mouse Orbit Movement ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 40;
+            const y = (e.clientY / window.innerHeight - 0.5) * 40;
+
+            document.getElementById('orb-1').style.transform = `translate(${x * 1.2}px, ${y * 1.2}px)`;
+            document.getElementById('orb-2').style.transform = `translate(${-x * 1.8}px, ${-y * 1.8}px)`;
+            document.getElementById('orb-3').style.transform = `translate(${x * 0.8}px, ${y * 0.8}px)`;
+        });
+
+        // --- 4. Interactive Mascot Speech Bubble Alerts ---
+        const mascotSpeeches = {
+            cat: [
+                "「喵！貓貓站長回報：全線 184 列車准點行駛中！」",
+                "「淡水信義線與板南線交會點運轉極度平穩！」",
+                "「大家搭乘捷運記得緊握扶手、站穩踏階喔喵！」"
+            ],
+            rabbit: [
+                "「兔兔調度員號誌監控：CBTC 傳輸零延遲！」",
+                "「自動列車駕駛 ATO 系統精準度達 99.9% 咕！」",
+                "「已為尖峰時段預備 3 班彈性備用車次！」"
+            ],
+            dog: [
+                "「柴柴安檢員巡察：台北車站月台人潮秩序優良！」",
+                "「閘門感應過卡非常順暢，汪汪！」",
+                "「車站環境安全無虞，隨時守護乘客安全！」"
+            ]
+        };
+
+        function triggerMascotSpeech(mascot) {
+            const list = mascotSpeeches[mascot];
+            const randomQuote = list[Math.floor(Math.random() * list.length)];
+            const elem = document.getElementById(`speech-${mascot}`);
+            elem.innerText = randomQuote;
+            elem.classList.remove('animate-bubble');
+            void elem.offsetWidth; // Trigger reflow for animation restart
+            elem.classList.add('animate-bubble');
+            
+            appendTerminalLog(`[CHARACTER] ${mascot.toUpperCase()} 發布語音狀態語音通告`);
+        }
+
+        // --- 5. Bouncing Metric Telemetry Wiggle ---
+        let passengerFlow = 142.8;
+        let powerkW = 84250;
+
+        setInterval(() => {
+            passengerFlow = (140 + Math.random() * 5).toFixed(1);
+            document.getElementById('m-flow').innerText = `${passengerFlow} k/h`;
+
+            powerkW = Math.floor(84000 + Math.random() * 500);
+            document.getElementById('m-power').innerText = `${powerkW.toLocaleString()} kW`;
+
+            const co2 = Math.floor(530 + Math.random() * 15);
+            document.getElementById('m-co2').innerText = `${co2} ppm`;
+
+            const noise = (63.5 + Math.random() * 1.5).toFixed(1);
+            document.getElementById('m-noise').innerText = `${noise} dB`;
+        }, 1800);
+
+        // --- 6. Live AI Terminal Log Generator ---
+        const terminalBox = document.getElementById('terminal-box');
+        const autoLogPool = [
+            "[ATC] 板南線 BL15 忠孝復興站列車進站倒數 20 秒",
+            "[SIGNAL] 淡水信義線 R10 台北車站號誌閉塞分區狀態：正常",
+            "[AIR] 車廂 102 號啟動冷氣循環，CO2 濃度維持 530ppm",
+            "[SECURITY] 柴柴安檢員於西門站實施月台例行安檢，無異狀",
+            "[POWER] 松山新店線動能回饋電網成功回收 120kWh",
+            "[MAINTENANCE] 兔兔調度員完成環狀線 Y16 車站號誌同步"
+        ];
+
+        function appendTerminalLog(msg) {
+            const timeStr = new Date().toTimeString().split(' ')[0];
+            const item = document.createElement('div');
+            item.innerText = `${timeStr} ${msg}`;
+            terminalBox.appendChild(item);
+            terminalBox.scrollTop = terminalBox.scrollHeight;
+        }
+
+        setInterval(() => {
+            const randomLog = autoLogPool[Math.floor(Math.random() * autoLogPool.length)];
+            appendTerminalLog(randomLog);
+        }, 2800);
+
+        function clearTerminalLogs() {
+            terminalBox.innerHTML = '<div>[SYSTEM] 行控日誌已手動重置...</div>';
+        }
+
+        function injectSimulatedAlert() {
+            appendTerminalLog("[ALERT] ⚠️ 模擬：台北車站湧入大型活動人潮！已自動啟動疏運動線！");
+            triggerAlarmFlashOnce();
+        }
+
+        // --- 7. Emergency Alarm Flash Mode ---
+        let isAlarmActive = false;
+        function toggleAlarmMode() {
+            isAlarmActive = !isAlarmActive;
+            const badge = document.getElementById('status-badge');
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+
+            if (isAlarmActive) {
+                document.body.classList.add('alarm-mode');
+                badge.className = "glass-card px-3 py-1.5 rounded-2xl flex items-center gap-2 border-lineRed/80 bg-lineRed/20";
+                dot.className = "w-2.5 h-2.5 rounded-full bg-lineRed animate-ping";
+                text.innerText = "ALERT Mode";
+                text.className = "text-xs font-bold text-lineRed font-mono uppercase";
+                appendTerminalLog("[WARNING] 🚨 廣播：行控中心進入 ALERT 全線警戒疏運模式！");
+            } else {
+                document.body.classList.remove('alarm-mode');
+                badge.className = "glass-card px-3 py-1.5 rounded-2xl flex items-center gap-2 border-neonGreen/40";
+                dot.className = "w-2.5 h-2.5 rounded-full bg-neonGreen animate-pulse";
+                text.innerText = "NORMAL Mode";
+                text.className = "text-xs font-bold text-neonGreen font-mono uppercase";
+                appendTerminalLog("[SYSTEM] 🟢 行控中心恢復 NORMAL 正常運轉狀態");
+            }
+        }
+
+        function triggerAlarmFlashOnce() {
+            document.body.classList.add('alarm-mode');
+            setTimeout(() => {
+                if (!isAlarmActive) document.body.classList.remove('alarm-mode');
+            }, 2000);
+        }
+
+        // --- 8. Interactive Taipei Metro Cross-Line Canvas ---
+        const canvas = document.getElementById('metro-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const activeLines = { BL: true, R: true, G: true, BR: true };
+        function toggleLine(line) {
+            activeLines[line] = !activeLines[line];
+            const btn = document.getElementById(`btn-${line}`);
+            if (activeLines[line]) {
+                btn.classList.add('opacity-100');
+                btn.classList.remove('opacity-40');
+            } else {
+                btn.classList.add('opacity-40');
+                btn.classList.remove('opacity-100');
+            }
+            appendTerminalLog(`[MAP] 顯示圖層切換：${line} 線 ${activeLines[line] ? '開啟' : '關閉'}`);
+        }
+
+        // Simulated Trains Traveling on Routes
+        const mapTrains = [
+            { line: 'BL', color: '#0070BD', progress: 0.15, speed: 0.002, name: 'BL12 板橋' },
+            { line: 'BL', color: '#0070BD', progress: 0.70, speed: -0.0025, name: 'BL18 市政府' },
+            { line: 'R',  color: '#E3002C', progress: 0.25, speed: 0.0022, name: 'R13 民權西路' },
+            { line: 'R',  color: '#E3002C', progress: 0.80, speed: -0.0018, name: 'R05 大安' },
+            { line: 'G',  color: '#008659', progress: 0.35, speed: 0.0028, name: 'G12 中正紀念堂' },
+            { line: 'BR', color: '#C48C31', progress: 0.50, speed: -0.003, name: 'BR11 科技大樓' }
+        ];
+
+        function drawMetroCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Background Grid Lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < w; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+
+            // Line Paths
+            // BL Line (Horizontal across center)
+            if (activeLines.BL) {
+                ctx.beginPath();
+                ctx.moveTo(w * 0.08, h * 0.5);
+                ctx.lineTo(w * 0.92, h * 0.5);
+                ctx.strokeStyle = '#0070BD';
+                ctx.lineWidth = 7;
+                ctx.stroke();
+            }
+
+            // R Line (Vertical / Diagonal)
+            if (activeLines.R) {
+                ctx.beginPath();
+                ctx.moveTo(w * 0.45, h * 0.1);
+                ctx.lineTo(w * 0.45, h * 0.5);
+                ctx.lineTo(w * 0.75, h * 0.9);
+                ctx.strokeStyle = '#E3002C';
+                ctx.lineWidth = 7;
+                ctx.stroke();
+            }
+
+            // G Line (S-curve)
+            if (activeLines.G) {
+                ctx.beginPath();
+                ctx.moveTo(w * 0.15, h * 0.85);
+                ctx.lineTo(w * 0.45, h * 0.5);
+                ctx.lineTo(w * 0.85, h * 0.2);
+                ctx.strokeStyle = '#008659';
+                ctx.lineWidth = 7;
+                ctx.stroke();
+            }
+
+            // BR Line (Elevated Brown)
+            if (activeLines.BR) {
+                ctx.beginPath();
+                ctx.moveTo(w * 0.75, h * 0.1);
+                ctx.lineTo(w * 0.75, h * 0.5);
+                ctx.lineTo(w * 0.9, h * 0.85);
+                ctx.strokeStyle = '#C48C31';
+                ctx.lineWidth = 5;
+                ctx.stroke();
+            }
+
+            // Major Stations / Interchanges
+            const stations = [
+                { x: w * 0.45, y: h * 0.5, name: 'R10/BL12 台北車站' },
+                { x: w * 0.75, y: h * 0.5, name: 'BL15/BR10 忠孝復興' },
+                { x: w * 0.45, y: h * 0.35, name: 'R11/G14 中山' },
+                { x: w * 0.3,  y: h * 0.5, name: 'BL11/G12 西門' }
+            ];
+
+            stations.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fill();
+                ctx.strokeStyle = '#07090E';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.font = '11px "Noto Sans TC"';
+                ctx.fillStyle = '#E2E8F0';
+                ctx.fillText(s.name, s.x - 25, s.y - 14);
+            });
+
+            // Animated Moving Trains
+            mapTrains.forEach(t => {
+                if (!activeLines[t.line]) return;
+
+                t.progress += t.speed;
+                if (t.progress > 0.95 || t.progress < 0.05) t.speed *= -1;
+
+                let tx = 0, ty = 0;
+                if (t.line === 'BL') {
+                    tx = w * (0.08 + t.progress * 0.84);
+                    ty = h * 0.5;
+                } else if (t.line === 'R') {
+                    if (t.progress < 0.5) {
+                        tx = w * 0.45;
+                        ty = h * (0.1 + t.progress * 0.8);
+                    } else {
+                        tx = w * (0.45 + (t.progress - 0.5) * 0.6);
+                        ty = h * (0.5 + (t.progress - 0.5) * 0.8);
+                    }
+                } else if (t.line === 'G') {
+                    tx = w * (0.15 + t.progress * 0.7);
+                    ty = h * (0.85 - t.progress * 0.65);
+                } else if (t.line === 'BR') {
+                    tx = w * 0.75;
+                    ty = h * (0.1 + t.progress * 0.8);
+                }
+
+                // Train Pulse Glow
+                ctx.beginPath();
+                ctx.arc(tx, ty, 9, 0, Math.PI * 2);
+                ctx.fillStyle = t.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = t.color;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            requestAnimationFrame(drawMetroCanvas);
+        }
+        requestAnimationFrame(drawMetroCanvas);
+
+        // Click Canvas Event Trigger
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = Math.round(e.clientX - rect.left);
+            const clickY = Math.round(e.clientY - rect.top);
+            appendTerminalLog(`[DISPATCH] 點擊座標 X:${clickX} Y:${clickY} -> 發射特定閉塞區段號誌測試訊號`);
+        });
+
+        // --- 9. Bottom Visual Canvas Charts (Air Quality & Signal) ---
+        function initCharts() {
+            const airCanvas = document.getElementById('chart-air');
+            const sigCanvas = document.getElementById('chart-signal');
+            
+            if (!airCanvas || !sigCanvas) return;
+
+            const airCtx = airCanvas.getContext('2d');
+            const sigCtx = sigCanvas.getContext('2d');
+
+            airCanvas.width = airCanvas.parentElement.clientWidth;
+            airCanvas.height = airCanvas.parentElement.clientHeight;
+            sigCanvas.width = sigCanvas.parentElement.clientWidth;
+            sigCanvas.height = sigCanvas.parentElement.clientHeight;
+
+            let step = 0;
+
+            function renderCharts() {
+                step += 0.05;
+
+                // Air Quality Chart
+                const aw = airCanvas.width;
+                const ah = airCanvas.height;
+                airCtx.clearRect(0, 0, aw, ah);
+                airCtx.beginPath();
+                airCtx.strokeStyle = '#00F0FF';
+                airCtx.lineWidth = 2.5;
+
+                for (let x = 0; x < aw; x += 5) {
+                    const y = ah / 2 + Math.sin(x * 0.03 + step) * 20 + Math.cos(x * 0.01) * 10;
+                    if (x === 0) airCtx.moveTo(x, y);
+                    else airCtx.lineTo(x, y);
+                }
+                airCtx.stroke();
+
+                // Signal Load Chart
+                const sw = sigCanvas.width;
+                const sh = sigCanvas.height;
+                sigCtx.clearRect(0, 0, sw, sh);
+                sigCtx.beginPath();
+                sigCtx.strokeStyle = '#B87CFF';
+                sigCtx.lineWidth = 2.5;
+
+                for (let x = 0; x < sw; x += 5) {
+                    const y = sh / 2 + Math.cos(x * 0.04 - step * 1.5) * 18 + (Math.random() - 0.5) * 6;
+                    if (x === 0) sigCtx.moveTo(x, y);
+                    else sigCtx.lineTo(x, y);
+                }
+                sigCtx.stroke();
+
+                requestAnimationFrame(renderCharts);
+            }
+            requestAnimationFrame(renderCharts);
+        }
+
+        window.onload = function() {
+            initCharts();
+        };
+    </script>
+</body>
+</html>
